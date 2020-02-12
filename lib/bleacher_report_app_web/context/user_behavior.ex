@@ -12,6 +12,7 @@ defmodule BleacherReportAppWeb.Context.UserBehavior do
 
     case Repo.insert(changeset) do
       {:ok, user_content_behavior} ->
+        update_counts(user_behavior_params["content_id"], "add")
         {:ok, user_content_behavior}
 
       {:error, changeset} ->
@@ -31,7 +32,6 @@ defmodule BleacherReportAppWeb.Context.UserBehavior do
     |> Repo.all()
     |> List.first()
     |> remove_fire(user_behavior_params)
-    |> IO.inspect(label: "x2asass")
   end
 
   defp remove_fire(changeset, user_behavior_params) when is_nil(changeset),
@@ -41,14 +41,29 @@ defmodule BleacherReportAppWeb.Context.UserBehavior do
     changeset
     |> UserBehavior.changeset(user_behavior_params)
     |> Repo.update()
+    |> case do
+      {:ok, changeset} ->
+        update_counts(user_behavior_params["content_id"], "remove")
+        {:ok, changeset}
+
+      {:error, changeset} ->
+        {:error, changeset}
+    end
   end
 
-  defp update_counts(content_id, counts) do
+  defp update_counts(content_id, "add") do
+    if counts = Cache.get_user_counts(content_id) do
+      Cache.set_user_counts(content_id, counts + 1)
+    end
+  end
+
+  defp update_counts(content_id, "remove") do
+    if counts = Cache.get_user_counts(content_id) do
+      Cache.set_user_counts(content_id, counts - 1)
+    end
   end
 
   def count_fires(content_id) do
-    IO.inspect(Cache.get_user_counts(content_id), label: "genserver")
-
     case Cache.get_user_counts(content_id) do
       nil ->
         query =

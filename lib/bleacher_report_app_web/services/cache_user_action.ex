@@ -16,7 +16,7 @@ defmodule BleacherReportAppWeb.UserFireCounts.Cache do
   def set_user_counts(content_id, counts) do
     GenServer.cast(
       :users_fire_counts_cache,
-      {:set_users_counts, content_id, counts}
+      {:set_user_counts, content_id, counts}
     )
   end
 
@@ -29,12 +29,10 @@ defmodule BleacherReportAppWeb.UserFireCounts.Cache do
   def handle_call({:get_user_counts, content_id}, _from, state) do
     counts = get_in(state, [:users_counts, content_id])
 
-    IO.inspect(counts, label: "trial")
-
     {:reply, counts, state}
   end
 
-  def handle_cast({:set_user_counts, content_id, counts, users_counts}, state) do
+  def handle_cast({:set_user_counts, content_id, counts}, state) do
     state = put_in(state, [:users_counts, content_id], counts)
 
     {:noreply, state}
